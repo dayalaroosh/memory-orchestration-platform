@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "production_mem0_server.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "production_mem0_server.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "$PYTHONPATH:.",
+    "PORT": "8090"
+  }
+} 
