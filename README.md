@@ -1,176 +1,213 @@
-# 🧠 Memory Orchestration Platform
+# Memory Orchestration Platform
 
-> The "Postman for AI Memory" - Seamless memory sharing across ChatGPT, Cursor, voice interfaces, and other AI tools.
+A production-ready memory management system built with FastAPI and integrated with Mem0 Platform API for intelligent memory processing.
+
+## 🧠 Features
+
+- **Intelligent Memory Management**: Powered by Mem0 Platform API for advanced memory processing
+- **Multi-Level Memory Types**: Goals, decisions, insights, code snippets, and more
+- **Semantic Search**: Find memories by meaning, not just keywords
+- **User Authentication**: JWT-based secure authentication
+- **Rate Limiting**: Built-in API rate limiting for production use
+- **RESTful API**: Clean, documented endpoints for all operations
+- **Background Processing**: Async memory storage for optimal performance
 
 ## 🚀 Quick Start
 
-### Local Development
-```bash
-# Clone the repository
-git clone https://github.com/aroosh-dayal/memory-orchestration-platform.git
-cd memory-orchestration-platform
+### Environment Setup
 
+Create a `.env` file with the following variables:
+
+```bash
+# Required: Mem0 Platform API Key
+MEM0_API_KEY=your_mem0_api_key_here
+
+# Optional: Custom configuration
+SECRET_KEY=your_secret_key_here
+PORT=8090
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_WINDOW=60
+```
+
+### Get Your Mem0 API Key
+
+1. Sign up at [Mem0 Platform](https://mem0.ai)
+2. Create a new API key in your dashboard
+3. Add it to your `.env` file as `MEM0_API_KEY`
+
+### Installation
+
+```bash
 # Install dependencies
 pip install -r requirements.txt
-
-# Set up environment
-cp .env.example .env
-# Edit .env with your API keys
 
 # Run the server
 python production_mem0_server.py
 ```
 
-### Railway Deployment
-```bash
-# Deploy to Railway
-railway login
-railway create memory-orchestration-platform
-railway up
-```
-
-### Vercel Deployment (Alternative)
-```bash
-# Deploy to Vercel
-vercel login
-vercel --prod
-```
-
-## 🏗️ Architecture
-
-The Memory Orchestration Platform provides:
-
-- **🔗 Universal Memory API** - Single API for all AI tools
-- **🤖 Multi-Tool Integration** - ChatGPT, Cursor, Voice, Web Dashboard
-- **🔒 Enterprise Security** - JWT auth, encryption, audit logs
-- **📊 Smart Analytics** - Usage insights and memory intelligence
-- **⚡ High Performance** - Sub-200ms response times, 99.9% uptime
-
-## 🛠️ Features
-
-### Core Memory Operations
-- **Create**: Store memories with rich metadata
-- **Search**: Semantic search with AI-powered relevance
-- **Update**: Version-controlled memory updates
-- **Delete**: Secure memory deletion with audit trails
-
-### AI Tool Integrations
-- **ChatGPT Custom GPT**: Proactive memory suggestions
-- **Cursor IDE**: Inline memory management
-- **Voice Interface**: "Remember this" commands
-- **Web Dashboard**: Visual memory management
-
-### Enterprise Features
-- **Multi-tenant Architecture**: Isolated user/team workspaces
-- **SSO Integration**: SAML, OAuth, Active Directory
-- **Audit Logging**: Complete activity tracking
-- **Data Governance**: Retention policies, compliance
+The server will start at `http://localhost:8090`
 
 ## 📚 API Documentation
 
 ### Authentication
-```bash
-# Register new user
-curl -X POST "https://your-domain.com/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "user", "email": "user@example.com", "password": "password"}'
 
-# Login
-curl -X POST "https://your-domain.com/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "user", "password": "password"}'
+#### Register User
+```bash
+POST /auth/register
+{
+  "email": "user@example.com",
+  "password": "secure_password"
+}
+```
+
+#### Login
+```bash
+POST /auth/login
+{
+  "email": "user@example.com", 
+  "password": "secure_password"
+}
 ```
 
 ### Memory Operations
-```bash
-# Create memory
-curl -X POST "https://your-domain.com/memories" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"content": "Important decision", "memory_type": "decision"}'
 
-# Search memories
-curl -X POST "https://your-domain.com/memories/search" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "project goals", "limit": 10}'
+#### Create Memory
+```bash
+POST /memories
+Authorization: Bearer <token>
+{
+  "content": "I need to implement user authentication",
+  "memory_type": "action_item",
+  "priority": "high",
+  "source": "manual",
+  "project_id": "web-app-v2",
+  "tags": ["auth", "security"],
+  "metadata": {"urgent": true}
+}
 ```
+
+#### Search Memories
+```bash
+POST /memories/search
+Authorization: Bearer <token>
+{
+  "query": "authentication tasks",
+  "limit": 10
+}
+```
+
+#### Get All Memories
+```bash
+GET /memories
+Authorization: Bearer <token>
+```
+
+### Memory Types
+
+- `goal` - Long-term objectives
+- `action_item` - Tasks to complete
+- `decision` - Important decisions made
+- `context` - General context information
+- `insight` - Key insights learned
+- `reference` - Reference materials
+- `code_snippet` - Code examples
+- `meeting_note` - Meeting summaries
+
+### Priority Levels
+
+- `low` - Nice to have
+- `medium` - Standard priority
+- `high` - Important
+- `critical` - Urgent/critical
+
+## 🏗️ Architecture
+
+### Mem0 Platform Integration
+
+This platform uses Mem0's hosted API service for:
+- **Intelligent Fact Extraction**: Automatically extracts key information
+- **Semantic Search**: Meaning-based memory retrieval
+- **Memory Consolidation**: Resolves conflicts and updates existing memories
+- **Performance Optimization**: 91% faster than full-context approaches
+
+### Components
+
+- **FastAPI Server**: High-performance async API server
+- **JWT Authentication**: Secure user authentication
+- **Mem0 Platform API**: Advanced memory processing
+- **Background Tasks**: Async memory storage
+- **Rate Limiting**: Production-ready request limiting
 
 ## 🔧 Configuration
 
 ### Environment Variables
-```env
-# Core Settings
-OPENAI_API_KEY=your_openai_api_key_here
-SECRET_KEY=your_secret_key_here
-DATABASE_URL=sqlite:///./memory_platform.db
 
-# Security
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MEM0_API_KEY` | Mem0 Platform API key | Required |
+| `SECRET_KEY` | JWT signing key | Auto-generated |
+| `PORT` | Server port | 8090 |
+| `RATE_LIMIT_REQUESTS` | Requests per window | 100 |
+| `RATE_LIMIT_WINDOW` | Rate limit window (seconds) | 60 |
 
-# Performance
-REDIS_URL=redis://localhost:6379
-MAX_WORKERS=4
-```
+## 🚀 Deployment
 
-## 🚀 Deployment Options
+### Railway
 
-### 1. Railway (Recommended)
-- Automatic deployments from GitHub
-- Built-in database and Redis
-- Environment variable management
-- Easy scaling
+1. Connect your GitHub repository to Railway
+2. Add environment variables in Railway dashboard
+3. Deploy automatically on push to main
 
-### 2. Vercel + Supabase
-- Serverless deployment
-- PostgreSQL database
-- Edge functions
-- Global CDN
+### Vercel
 
-### 3. Docker
+1. Connect repository to Vercel
+2. Add environment variables
+3. Deploy serverless functions
+
+### Docker
+
 ```bash
+# Build image
 docker build -t memory-platform .
-docker run -p 8090:8090 memory-platform
+
+# Run container
+docker run -p 8090:8090 -e MEM0_API_KEY=your_key memory-platform
 ```
 
-## 🧪 Testing
+## 📊 Performance
 
-```bash
-# Run all tests
-pytest
+With Mem0 Platform integration:
+- **26% higher accuracy** than basic memory systems
+- **91% lower latency** than full-context approaches  
+- **90% token cost savings** through intelligent extraction
+- **Sub-second response times** for memory operations
 
-# Run with coverage
-pytest --cov=. --cov-report=html
+## 🔒 Security
 
-# Load testing
-locust -f tests/load/locustfile.py
-```
-
-## 📊 Monitoring
-
-- **Health Check**: `/health`
-- **Metrics**: `/metrics`
-- **Status**: `/status`
+- JWT-based authentication
+- Rate limiting protection
+- Input validation and sanitization
+- Secure password hashing
+- CORS configuration
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-## 📝 License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see LICENSE file for details
 
-## 🔗 Links
+## 🆘 Support
 
-- **Live Demo**: [memory-platform.vercel.app](https://memory-platform.vercel.app)
-- **API Docs**: [api-docs.memory-platform.com](https://api-docs.memory-platform.com)
-- **Status**: [status.memory-platform.com](https://status.memory-platform.com)
+- [Mem0 Documentation](https://docs.mem0.ai)
+- [Mem0 Discord Community](https://discord.gg/mem0)
+- [GitHub Issues](https://github.com/your-repo/issues)
 
 ---
 
-**Built with ❤️ for the AI community** 
+**Built with ❤️ using Mem0 Platform API** 

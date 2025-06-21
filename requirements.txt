@@ -5,38 +5,19 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
-# Memory & AI - Compatible versions
-mem0ai==0.0.11
-openai>=2.0.0
-
 # Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
-# Database
-sqlalchemy==2.0.23
-alembic==1.12.1
-
-# HTTP & API
-httpx==0.25.2
-requests==2.31.0
-
 # Data Processing
 pydantic==2.4.2
-pydantic-settings==2.0.3
 
 # Utilities
 python-dotenv==1.0.0
-typing-extensions==4.8.0
 
-# Production Server
-gunicorn==21.2.0
+# HTTP Client for Mem0 Platform API
+httpx==0.25.2
+requests==2.31.0
 
-# Monitoring & Logging
-structlog==23.2.0
-
-# Optional: Redis for caching
-redis==5.0.1
-
-# Optional: PostgreSQL
-psycopg2-binary==2.9.9 
+# Database (for local user management)
+sqlalchemy==2.0.23 
