@@ -1,0 +1,31 @@
+{
+  "name": "memory-platform-clean",
+  "version": "1.0.0",
+  "description": "Advanced memory management system with Mem0 Platform integration, designed for seamless integration with Custom GPTs and other AI tools.",
+  "type": "module",
+  "main": "memory-mcp-server.js",
+  "scripts": {
+    "start": "node memory-mcp-server.js",
+    "dev": "node --watch memory-mcp-server.js",
+    "test": "node test-mcp.js",
+    "setup": "powershell -ExecutionPolicy Bypass -File setup-mcp.ps1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dayalaroosh/memory-orchestration-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dayalaroosh/memory-orchestration-platform/issues"
+  },
+  "homepage": "https://github.com/dayalaroosh/memory-orchestration-platform#readme",
+  "dependencies": {
+    "@fastify/cors": "^11.0.1",
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "axios": "^1.10.0",
+    "dotenv": "^16.5.0",
+    "fastify": "^5.4.0"
+  }
+}

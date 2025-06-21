@@ -1,0 +1,31 @@
+# Memory Orchestration Platform - Cursor Rules
+
+## MCP Integration
+This project includes a Memory Orchestration MCP server that provides:
+- Cross-tool memory sharing
+- Context-aware memory retrieval
+- Action item tracking
+- Project-based memory organization
+
+## Available MCP Tools:
+- `remember`: Store memories across tools
+- `recall`: Search and retrieve memories
+- `get_context`: Get relevant context for current work
+- `sync_from_tool`: Sync memories from external tools
+
+## Usage in Cursor:
+1. Use the `remember` tool to save important context
+2. Use `recall` to find relevant memories
+3. Use `get_context` to get project-specific context
+4. Tag memories with projects for better organization
+
+## Project Structure:
+- `memory-mcp-server.js`: Main MCP server
+- `production_mem0_server.py`: Backend memory API
+- `mcp-config.json`: MCP configuration
+
+## Development Notes:
+- Memory API runs on port 8090
+- MCP server connects to memory API
+- Use project tags for better organization
+- All memories are searchable across tools 
