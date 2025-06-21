@@ -23,7 +23,7 @@ try {
 # Test 2: Add Memory - User Preferences
 Write-Host "`n2. 💾 Testing Add Memory (User Preferences)..." -ForegroundColor Yellow
 $memoryData = @{
-    content = "User prefers dark mode interface, concise responses, and works on Product Strategy Council project"
+    content = "User prefers dark mode interface and concise responses"
     metadata = @{
         type = "user_preference"
         importance = "high"
