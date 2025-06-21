@@ -1,1 +1,1 @@
-web: python production_mem0_server.py 
+web: uvicorn production_mem0_server:app --host 0.0.0.0 --port $PORT --workers 1 

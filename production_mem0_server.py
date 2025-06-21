@@ -329,6 +329,15 @@ async def root():
         }
     }
 
+@app.get("/test")
+async def test_endpoint():
+    """Simple test endpoint for Railway debugging"""
+    return {
+        "status": "ok", 
+        "message": "Memory Orchestration Platform is running",
+        "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+    }
+
 @app.get("/health")
 async def health_check():
     """Simple health check that always returns healthy for Railway"""
@@ -539,10 +548,14 @@ async def add_memory_legacy(request: dict, user_id: str = Depends(verify_token))
 if __name__ == "__main__":
     # Railway sets PORT automatically, fallback to 8090 for local development
     port = int(os.getenv("PORT", 8090))
-    # Always bind to 0.0.0.0 for Railway (don't use HOST env var)
+    # Always bind to 0.0.0.0 for Railway compatibility
     host = "0.0.0.0"
     
+    # Use single worker for Railway (auto-scaling platform)
+    workers = 1
+    
     logger.info(f"🚀 Starting Memory Orchestration Platform on {host}:{port}")
+    logger.info(f"👥 Workers: {workers} (Railway optimized)")
     logger.info(f"📊 Mem0 API integration: {'enabled' if mem0_client else 'disabled'}")
     logger.info(f"🔐 Environment: {'production' if os.getenv('RAILWAY_ENVIRONMENT') else 'development'}")
     
@@ -551,11 +564,14 @@ if __name__ == "__main__":
             "production_mem0_server:app",  # Use string import path for Railway
             host=host,
             port=port,
+            workers=workers,  # Single worker for Railway
             reload=False,
             log_level="info",
             access_log=True,
-            workers=1  # Single worker for Railway
+            # Railway-specific optimizations
+            timeout_keep_alive=30,
+            timeout_graceful_shutdown=30
         )
     except Exception as e:
-        logger.error(f"Failed to start server: {e}")
+        logger.error(f"❌ Failed to start server: {e}")
         raise 
