@@ -8,7 +8,7 @@ import os
 import json
 import uuid
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Any
 from enum import Enum
 import logging
@@ -22,7 +22,7 @@ import uvicorn
 
 # Security and validation
 from pydantic import BaseModel, Field
-import jwt
+import jwt  # PyJWT - Modern JWT library
 from passlib.context import CryptContext
 
 # HTTP clients for Mem0 Platform API
@@ -183,9 +183,9 @@ class MemoryResponse(BaseModel):
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(datetime.timezone.utc) + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(datetime.timezone.utc) + timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM)
@@ -198,7 +198,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
         return user_id
-    except jwt.PyJWTError:
+    except jwt.InvalidTokenError:  # Updated exception for PyJWT
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
 def hash_password(password: str) -> str:
@@ -209,7 +209,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # Rate limiting
 def check_rate_limit(user_id: str) -> bool:
-    now = datetime.now(datetime.timezone.utc)
+    now = datetime.now(timezone.utc)
     if user_id not in rate_limits:
         rate_limits[user_id] = []
     
@@ -320,7 +320,7 @@ async def root():
         "version": "1.0.0",
         "status": "operational",
         "mem0_integration": "enabled" if mem0_client else "disabled",
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "endpoints": {
             "health": "/health",
             "auth": "/auth/login",
@@ -335,7 +335,7 @@ async def test_endpoint():
     return {
         "status": "ok", 
         "message": "Memory Orchestration Platform is running",
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 @app.get("/health")
@@ -345,7 +345,7 @@ async def health_check():
         "status": "healthy",
         "service": "Memory Orchestration Platform",
         "version": "1.0.0",
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "mem0_configured": bool(mem0_client)
     }
 
@@ -364,7 +364,7 @@ async def register_user(user_data: UserCreate):
         "id": user_id,
         "email": user_data.email,
         "password": hashed_password,
-        "created_at": datetime.now(datetime.timezone.utc),
+        "created_at": datetime.now(timezone.utc),
     }
     
     # Create access token
@@ -450,7 +450,7 @@ async def create_memory(
         project_id=memory_data.project_id,
         tags=memory_data.tags,
         metadata=enhanced_metadata,
-        created_at=datetime.now(datetime.timezone.utc),
+        created_at=datetime.now(timezone.utc),
         importance_score=importance_score
     )
 
@@ -497,7 +497,7 @@ async def search_memories(
         "query": search_data.query,
         "results": results,
         "total": len(results),
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 @app.get("/memories")
@@ -508,13 +508,13 @@ async def get_all_memories(user_id: str = Depends(verify_token)):
         return {
             "message": "Feature requires Mem0 Platform API extension",
             "user_id": user_id,
-            "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     else:
         return {
             "memories": [],
             "user_id": user_id,
-            "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 @app.get("/memories/projects")
@@ -523,7 +523,7 @@ async def get_user_projects(user_id: str = Depends(verify_token)):
     return {
         "projects": [],
         "user_id": user_id,
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 @app.delete("/memories/{memory_id}")
@@ -532,7 +532,7 @@ async def delete_memory(memory_id: str, user_id: str = Depends(verify_token)):
     return {
         "message": f"Memory {memory_id} deletion requested",
         "user_id": user_id,
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 @app.post("/memories/add")
