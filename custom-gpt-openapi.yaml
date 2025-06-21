@@ -23,13 +23,8 @@ paths:
                     type: string
                   service:
                     type: string
-                  version:
-                    type: string
-                  timestamp:
-                    type: string
                 required:
                   - status
-                  - service
 
   /auth/register:
     post:
@@ -58,8 +53,6 @@ paths:
                 type: object
                 properties:
                   message:
-                    type: string
-                  user_id:
                     type: string
                   access_token:
                     type: string
@@ -95,8 +88,6 @@ paths:
                 properties:
                   access_token:
                     type: string
-                  user_id:
-                    type: string
                 required:
                   - access_token
 
@@ -104,8 +95,6 @@ paths:
     post:
       operationId: addMemory
       summary: Add new memory
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -115,13 +104,6 @@ paths:
               properties:
                 memory:
                   type: string
-                metadata:
-                  type: object
-                  properties:
-                    category:
-                      type: string
-                    importance:
-                      type: string
               required:
                 - memory
       responses:
@@ -138,14 +120,11 @@ paths:
                     type: string
                 required:
                   - message
-                  - memory_id
 
   /memories/search:
     post:
       operationId: searchMemories
       summary: Search memories
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -155,9 +134,6 @@ paths:
               properties:
                 query:
                   type: string
-                limit:
-                  type: integer
-                  default: 10
               required:
                 - query
       responses:
@@ -177,23 +153,8 @@ paths:
                           type: string
                         score:
                           type: number
-                        metadata:
-                          type: object
-                          properties:
-                            category:
-                              type: string
                       required:
                         - memory
                         - score
-                  total_results:
-                    type: integer
                 required:
-                  - results
-                  - total_results
-
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT 
+                  - results 
