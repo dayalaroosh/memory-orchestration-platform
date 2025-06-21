@@ -1,202 +1,142 @@
 # Memory Orchestration Platform
 
-A production-ready memory management system built with FastAPI and integrated with Mem0 Platform API for intelligent memory processing.
+Advanced memory management system with Mem0 Platform integration, designed for seamless integration with Custom GPTs and other AI tools.
 
-## 🧠 Features
+## 🚀 Features
 
-- **Intelligent Memory Management**: Powered by Mem0 Platform API for advanced memory processing
-- **Multi-Level Memory Types**: Goals, decisions, insights, code snippets, and more
-- **Semantic Search**: Find memories by meaning, not just keywords
-- **User Authentication**: JWT-based secure authentication
-- **Rate Limiting**: Built-in API rate limiting for production use
-- **RESTful API**: Clean, documented endpoints for all operations
-- **Background Processing**: Async memory storage for optimal performance
+- **Memory Management**: Store, search, and retrieve memories with semantic search
+- **Mem0 Integration**: Leverages Mem0 Platform for advanced memory capabilities
+- **Custom GPT Ready**: Simplified authentication and endpoints for ChatGPT Custom GPTs
+- **Multi-source Support**: Handle memories from various sources (ChatGPT, Cursor, Voice, etc.)
+- **JWT Authentication**: Secure authentication with token-based access
+- **Rate Limiting**: Built-in rate limiting for API protection
 
-## 🚀 Quick Start
+## 🔧 Quick Setup for Custom GPT
 
-### Environment Setup
+### 1. Custom GPT Configuration
 
-Create a `.env` file with the following variables:
+When creating your Custom GPT, use these settings:
 
-```bash
-# Required: Mem0 Platform API Key
-MEM0_API_KEY=your_mem0_api_key_here
+**Authentication:**
+- Type: API Key
+- Auth Type: Custom
+- Custom Header Name: `Authorization`
+- API Key: `memory-gpt-2025-key`
 
-# Optional: Custom configuration
-SECRET_KEY=your_secret_key_here
-PORT=8090
-RATE_LIMIT_REQUESTS=100
-RATE_LIMIT_WINDOW=60
-```
+**OpenAPI Schema:** Use the provided `custom-gpt-openapi.yaml`
 
-### Get Your Mem0 API Key
+### 2. Available Endpoints for Custom GPT
 
-1. Sign up at [Mem0 Platform](https://mem0.ai)
-2. Create a new API key in your dashboard
-3. Add it to your `.env` file as `MEM0_API_KEY`
+- `POST /gpt/memories` - Add a new memory
+- `POST /gpt/search` - Search existing memories
+- `GET /health` - Health check (no auth required)
 
-### Installation
+### 3. Example Usage
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-python production_mem0_server.py
-```
-
-The server will start at `http://localhost:8090`
-
-## 📚 API Documentation
-
-### Authentication
-
-#### Register User
-```bash
-POST /auth/register
+**Add Memory:**
+```json
 {
-  "email": "user@example.com",
-  "password": "secure_password"
+  "content": "User prefers dark mode for all applications"
 }
 ```
 
-#### Login
-```bash
-POST /auth/login
+**Search Memories:**
+```json
 {
-  "email": "user@example.com", 
-  "password": "secure_password"
+  "query": "user preferences"
 }
 ```
 
-### Memory Operations
+## 🌐 Deployment
 
-#### Create Memory
+Currently deployed on Render at: https://memory-orchestration-platform.onrender.com
+
+## 🔐 Authentication Options
+
+### For Custom GPT (Simplified)
+- Use API Key: `memory-gpt-2025-key`
+- Endpoints: `/gpt/memories`, `/gpt/search`
+
+### For Full API Access (JWT)
+1. Register: `POST /auth/register`
+2. Login: `POST /auth/login`
+3. Use returned JWT token for all authenticated endpoints
+
+## 📝 API Documentation
+
+### Health Check
 ```bash
-POST /memories
-Authorization: Bearer <token>
-{
-  "content": "I need to implement user authentication",
-  "memory_type": "action_item",
-  "priority": "high",
-  "source": "manual",
-  "project_id": "web-app-v2",
-  "tags": ["auth", "security"],
-  "metadata": {"urgent": true}
-}
+curl https://memory-orchestration-platform.onrender.com/health
 ```
 
-#### Search Memories
+### Add Memory (Custom GPT)
 ```bash
-POST /memories/search
-Authorization: Bearer <token>
-{
-  "query": "authentication tasks",
-  "limit": 10
-}
+curl -X POST https://memory-orchestration-platform.onrender.com/gpt/memories \
+  -H "Authorization: memory-gpt-2025-key" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Remember user prefers concise responses"}'
 ```
 
-#### Get All Memories
+### Search Memories (Custom GPT)
 ```bash
-GET /memories
-Authorization: Bearer <token>
+curl -X POST https://memory-orchestration-platform.onrender.com/gpt/search \
+  -H "Authorization: memory-gpt-2025-key" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "user preferences"}'
 ```
 
-### Memory Types
+## 🛠 Development
 
-- `goal` - Long-term objectives
-- `action_item` - Tasks to complete
-- `decision` - Important decisions made
-- `context` - General context information
-- `insight` - Key insights learned
-- `reference` - Reference materials
-- `code_snippet` - Code examples
-- `meeting_note` - Meeting summaries
-
-### Priority Levels
-
-- `low` - Nice to have
-- `medium` - Standard priority
-- `high` - Important
-- `critical` - Urgent/critical
-
-## 🏗️ Architecture
-
-### Mem0 Platform Integration
-
-This platform uses Mem0's hosted API service for:
-- **Intelligent Fact Extraction**: Automatically extracts key information
-- **Semantic Search**: Meaning-based memory retrieval
-- **Memory Consolidation**: Resolves conflicts and updates existing memories
-- **Performance Optimization**: 91% faster than full-context approaches
-
-### Components
-
-- **FastAPI Server**: High-performance async API server
-- **JWT Authentication**: Secure user authentication
-- **Mem0 Platform API**: Advanced memory processing
-- **Background Tasks**: Async memory storage
-- **Rate Limiting**: Production-ready request limiting
-
-## 🔧 Configuration
+### Local Setup
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Set environment variables (see `.env.example`)
+4. Run: `python production_mem0_server.py`
 
 ### Environment Variables
+- `MEM0_API_KEY`: Your Mem0 Platform API key
+- `SECRET_KEY`: JWT secret key
+- `PORT`: Server port (default: 8090)
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MEM0_API_KEY` | Mem0 Platform API key | Required |
-| `SECRET_KEY` | JWT signing key | Auto-generated |
-| `PORT` | Server port | 8090 |
-| `RATE_LIMIT_REQUESTS` | Requests per window | 100 |
-| `RATE_LIMIT_WINDOW` | Rate limit window (seconds) | 60 |
+## 🔄 Troubleshooting Custom GPT
 
-## 🚀 Deployment
+If you're experiencing authentication issues:
 
-### Railway
+1. **Check API Key**: Ensure you're using `memory-gpt-2025-key`
+2. **Test Endpoints**: Try the `/health` endpoint first (no auth required)
+3. **Use Simplified Endpoints**: Use `/gpt/memories` and `/gpt/search` instead of the full API
+4. **Check Logs**: Monitor server logs for specific error messages
 
-1. Connect your GitHub repository to Railway
-2. Add environment variables in Railway dashboard
-3. Deploy automatically on push to main
-
-### Vercel
-
-1. Connect repository to Vercel
-2. Add environment variables
-3. Deploy serverless functions
-
-### Docker
-
+### Test Without Authentication
 ```bash
-# Build image
-docker build -t memory-platform .
-
-# Run container
-docker run -p 8090:8090 -e MEM0_API_KEY=your_key memory-platform
+curl https://memory-orchestration-platform.onrender.com/test-auth
 ```
 
-## 📊 Performance
+## 📊 Memory Types
 
-With Mem0 Platform integration:
-- **26% higher accuracy** than basic memory systems
-- **91% lower latency** than full-context approaches  
-- **90% token cost savings** through intelligent extraction
-- **Sub-second response times** for memory operations
+- `GOAL`: Goals and objectives
+- `ACTION_ITEM`: Tasks and todos  
+- `DECISION`: Decisions made
+- `CONTEXT`: General context information
+- `INSIGHT`: Insights and learnings
+- `REFERENCE`: Reference materials
+- `CODE_SNIPPET`: Code snippets
+- `MEETING_NOTE`: Meeting notes
 
-## 🔒 Security
+## 🎯 Use Cases
 
-- JWT-based authentication
-- Rate limiting protection
-- Input validation and sanitization
-- Secure password hashing
-- CORS configuration
+- **Personal AI Assistant**: Remember user preferences and context
+- **Project Management**: Track decisions, goals, and action items
+- **Learning**: Store insights and knowledge for retrieval
+- **Code Documentation**: Remember code patterns and snippets
+- **Meeting Management**: Store and search meeting notes
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Submit a pull request
 
 ## 📄 License
 
