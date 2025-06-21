@@ -300,6 +300,10 @@ async def startup_event():
     logger.info("🚀 Memory Orchestration Platform starting up...")
     logger.info(f"📊 Mem0 API integration: {'✅ enabled' if mem0_client else '⚠️ disabled (no API key)'}")
     logger.info(f"🔐 Secret key: {'✅ configured' if config.SECRET_KEY != 'your-secret-key-change-in-production' else '⚠️ using default'}")
+    logger.info(f"🌍 Environment variables loaded:")
+    logger.info(f"   - PORT: {os.getenv('PORT', 'not set')}")
+    logger.info(f"   - MEM0_API_KEY: {'✅ set' if config.MEM0_API_KEY else '❌ not set'}")
+    logger.info(f"   - RAILWAY_ENVIRONMENT: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}")
     logger.info("✅ Application startup complete")
 
 @app.on_event("shutdown")
@@ -330,10 +334,10 @@ async def health_check():
     """Simple health check that always returns healthy for Railway"""
     return {
         "status": "healthy",
-        "mem0_status": "connected" if mem0_client else "not_configured",
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
         "service": "Memory Orchestration Platform",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+        "mem0_configured": bool(mem0_client)
     }
 
 # Authentication endpoints
@@ -533,17 +537,25 @@ async def add_memory_legacy(request: dict, user_id: str = Depends(verify_token))
     return await create_memory(memory_data, BackgroundTasks(), user_id)
 
 if __name__ == "__main__":
+    # Railway sets PORT automatically, fallback to 8090 for local development
     port = int(os.getenv("PORT", 8090))
-    host = os.getenv("HOST", "0.0.0.0")
+    # Always bind to 0.0.0.0 for Railway (don't use HOST env var)
+    host = "0.0.0.0"
     
-    logger.info(f"Starting Memory Orchestration Platform on {host}:{port}")
-    logger.info(f"Mem0 API integration: {'enabled' if mem0_client else 'disabled'}")
+    logger.info(f"🚀 Starting Memory Orchestration Platform on {host}:{port}")
+    logger.info(f"📊 Mem0 API integration: {'enabled' if mem0_client else 'disabled'}")
+    logger.info(f"🔐 Environment: {'production' if os.getenv('RAILWAY_ENVIRONMENT') else 'development'}")
     
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        reload=False,
-        log_level="info",
-        access_log=True
-    ) 
+    try:
+        uvicorn.run(
+            "production_mem0_server:app",  # Use string import path for Railway
+            host=host,
+            port=port,
+            reload=False,
+            log_level="info",
+            access_log=True,
+            workers=1  # Single worker for Railway
+        )
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        raise 
