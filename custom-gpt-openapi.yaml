@@ -1,0 +1,199 @@
+openapi: 3.1.0
+info:
+  title: Memory Orchestration Platform
+  description: Memory management with Mem0 integration
+  version: 1.0.0
+servers:
+  - url: https://memory-orchestration-platform.onrender.com
+
+paths:
+  /health:
+    get:
+      operationId: checkHealth
+      summary: Check service health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  service:
+                    type: string
+                  version:
+                    type: string
+                  timestamp:
+                    type: string
+                required:
+                  - status
+                  - service
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user_id:
+                    type: string
+                  access_token:
+                    type: string
+                required:
+                  - message
+                  - access_token
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  user_id:
+                    type: string
+                required:
+                  - access_token
+
+  /memories:
+    post:
+      operationId: addMemory
+      summary: Add new memory
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                memory:
+                  type: string
+                metadata:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                    importance:
+                      type: string
+              required:
+                - memory
+      responses:
+        '200':
+          description: Memory added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  memory_id:
+                    type: string
+                required:
+                  - message
+                  - memory_id
+
+  /memories/search:
+    post:
+      operationId: searchMemories
+      summary: Search memories
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                limit:
+                  type: integer
+                  default: 10
+              required:
+                - query
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        memory:
+                          type: string
+                        score:
+                          type: number
+                        metadata:
+                          type: object
+                          properties:
+                            category:
+                              type: string
+                      required:
+                        - memory
+                        - score
+                  total_results:
+                    type: integer
+                required:
+                  - results
+                  - total_results
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
