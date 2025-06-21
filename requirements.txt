@@ -5,9 +5,10 @@ fastapi==0.115.0
 uvicorn[standard]==0.29.0
 python-multipart==0.0.12
 
-# Authentication & Security
-python-jose[cryptography]==3.3.0
+# Authentication & Security - MODERN STACK
+PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
+cryptography==44.0.0
 
 # Data Processing - Updated to newer version with pre-compiled wheels
 pydantic==2.10.2
