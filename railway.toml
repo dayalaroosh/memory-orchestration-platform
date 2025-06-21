@@ -1,0 +1,13 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[services.memory-platform]
+source.repo = "dayalaroosh/memory-orchestration-platform"
+variables.PORT = "8090"
+variables.HOST = "0.0.0.0" 
