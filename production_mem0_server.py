@@ -14,7 +14,7 @@ from enum import Enum
 import logging
 
 # FastAPI imports
-from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
@@ -294,6 +294,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Simple API key for Custom GPT
+CUSTOM_GPT_API_KEY = "memory-gpt-2025-key"
+
+def verify_simple_auth(authorization: str = Header(None)):
+    """Simple API key authentication for Custom GPT"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+    
+    # Handle both "Bearer token" and "token" formats
+    if authorization.startswith("Bearer "):
+        token = authorization[7:]
+    else:
+        token = authorization
+    
+    # For Custom GPT, accept the simple API key
+    if token == CUSTOM_GPT_API_KEY:
+        return "custom-gpt-user"
+    
+    # Also try JWT token verification
+    try:
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        return user_id
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+
 @app.on_event("startup")
 async def startup_event():
     """Application startup event"""
@@ -347,6 +375,26 @@ async def health_check():
         "version": "1.0.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "mem0_configured": bool(mem0_client)
+    }
+
+@app.get("/test-auth")
+async def test_auth_endpoint():
+    """Test endpoint that doesn't require authentication"""
+    return {
+        "status": "ok",
+        "message": "This endpoint works without authentication",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "auth_required": False
+    }
+
+@app.post("/test-memory")
+async def test_memory_endpoint(data: dict):
+    """Test memory endpoint without authentication for debugging"""
+    return {
+        "status": "success",
+        "message": "Memory test endpoint working",
+        "received_data": data,
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 # Authentication endpoints
@@ -544,6 +592,102 @@ async def add_memory_legacy(request: dict, user_id: str = Depends(verify_token))
     
     memory_data = MemoryCreate(content=content)
     return await create_memory(memory_data, BackgroundTasks(), user_id)
+
+# Simplified endpoints for Custom GPT
+@app.post("/gpt/memories")
+async def add_memory_for_gpt(
+    data: dict,
+    user_id: str = Depends(verify_simple_auth)
+):
+    """Simplified memory addition for Custom GPT"""
+    try:
+        memory_content = data.get("memory", data.get("content", ""))
+        if not memory_content:
+            raise HTTPException(status_code=400, detail="Memory content is required")
+        
+        # Create a simple memory entry
+        memory_id = str(uuid.uuid4())
+        memory_entry = {
+            "id": memory_id,
+            "content": memory_content,
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc),
+            "metadata": data.get("metadata", {})
+        }
+        
+        # Store in local storage (simple dict for now)
+        if not hasattr(app.state, "memories"):
+            app.state.memories = {}
+        
+        if user_id not in app.state.memories:
+            app.state.memories[user_id] = []
+        
+        app.state.memories[user_id].append(memory_entry)
+        
+        # Also try to store in Mem0 if available
+        if mem0_client:
+            try:
+                messages = [{"role": "user", "content": memory_content}]
+                await mem0_client.add_memory(messages, user_id, data.get("metadata", {}))
+            except Exception as e:
+                logger.warning(f"Failed to store in Mem0: {e}")
+        
+        return {
+            "message": "Memory added successfully",
+            "memory_id": memory_id,
+            "content": memory_content
+        }
+        
+    except Exception as e:
+        logger.error(f"Error adding memory: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to add memory: {str(e)}")
+
+@app.post("/gpt/search")
+async def search_memories_for_gpt(
+    data: dict,
+    user_id: str = Depends(verify_simple_auth)
+):
+    """Simplified memory search for Custom GPT"""
+    try:
+        query = data.get("query", "")
+        if not query:
+            raise HTTPException(status_code=400, detail="Search query is required")
+        
+        results = []
+        
+        # Search in local storage
+        if hasattr(app.state, "memories") and user_id in app.state.memories:
+            for memory in app.state.memories[user_id]:
+                if query.lower() in memory["content"].lower():
+                    results.append({
+                        "memory": memory["content"],
+                        "score": 0.8,  # Simple scoring
+                        "created_at": memory["created_at"].isoformat()
+                    })
+        
+        # Also search in Mem0 if available
+        if mem0_client:
+            try:
+                mem0_results = await mem0_client.search_memories(query, user_id, limit=5)
+                if mem0_results and "memories" in mem0_results:
+                    for mem in mem0_results["memories"]:
+                        results.append({
+                            "memory": mem.get("memory", mem.get("content", "")),
+                            "score": mem.get("score", 0.5),
+                            "source": "mem0"
+                        })
+            except Exception as e:
+                logger.warning(f"Failed to search Mem0: {e}")
+        
+        return {
+            "results": results[:10],  # Limit to 10 results
+            "total_results": len(results),
+            "query": query
+        }
+        
+    except Exception as e:
+        logger.error(f"Error searching memories: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to search memories: {str(e)}")
 
 if __name__ == "__main__":
     # Railway sets PORT automatically, fallback to 8090 for local development
