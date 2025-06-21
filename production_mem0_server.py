@@ -333,6 +333,10 @@ async def startup_event():
     logger.info(f"   - PORT: {os.getenv('PORT', 'not set')}")
     logger.info(f"   - MEM0_API_KEY: {'✅ set' if config.MEM0_API_KEY else '❌ not set'}")
     logger.info(f"   - RAILWAY_ENVIRONMENT: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}")
+    logger.info(f"🌐 Render Environment:")
+    logger.info(f"   - RENDER_EXTERNAL_URL: {os.getenv('RENDER_EXTERNAL_URL', 'not set')}")
+    logger.info(f"   - RENDER_SERVICE_NAME: {os.getenv('RENDER_SERVICE_NAME', 'not set')}")
+    logger.info(f"   - PORT: {os.getenv('PORT', 'not set')}")
     logger.info("✅ Application startup complete")
 
 @app.on_event("shutdown")
@@ -369,13 +373,15 @@ async def test_endpoint():
 
 @app.get("/health")
 async def health_check():
-    """Simple health check that always returns healthy for Railway"""
+    """Simple health check that always returns healthy for Render"""
     return {
         "status": "healthy",
         "service": "Memory Orchestration Platform",
         "version": "1.0.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "mem0_configured": bool(mem0_client)
+        "mem0_configured": bool(mem0_client),
+        "render_url": os.getenv("RENDER_EXTERNAL_URL", ""),
+        "port": os.getenv("PORT", "10000")
     }
 
 @app.get("/test-auth")
@@ -912,8 +918,8 @@ async def smart_detect_memory(
         }
 
 if __name__ == "__main__":
-    # Railway sets PORT automatically, fallback to 8090 for local development
-    port = int(os.getenv("PORT", 8090))
+    # Render sets PORT automatically, fallback to 10000 for local development
+    port = int(os.getenv("PORT", 10000))
     # Always bind to 0.0.0.0 for Railway compatibility
     host = "0.0.0.0"
     

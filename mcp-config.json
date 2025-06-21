@@ -5,7 +5,7 @@
       "args": ["memory-mcp-server.js"],
       "cwd": ".",
       "env": {
-        "MEMORY_API_URL": "http://localhost:8090",
+        "MEMORY_API_URL": "https://memory-orchestration-platform.onrender.com",
         "MEMORY_API_KEY": "memory-gpt-2025-key"
       }
     }

@@ -21,6 +21,10 @@ import {
 import axios from 'axios';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Configuration
 const CONFIG = {
@@ -29,6 +33,12 @@ const CONFIG = {
   MCP_SERVER_NAME: 'memory-orchestration',
   MCP_SERVER_VERSION: '1.0.0'
 };
+
+// Debug logging
+console.error('🔧 MCP Server Configuration:');
+console.error(`   - API URL: ${CONFIG.MEMORY_API_URL}`);
+console.error(`   - API Key: ${CONFIG.MEMORY_API_KEY ? '***' + CONFIG.MEMORY_API_KEY.slice(-4) : 'NOT SET'}`);
+console.error(`   - Server: ${CONFIG.MCP_SERVER_NAME} v${CONFIG.MCP_SERVER_VERSION}`);
 
 class MemoryOrchestrationServer {
   constructor() {
