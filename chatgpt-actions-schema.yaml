@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: Memory Assistant Actions
+  description: Memory functions for regular ChatGPT conversations with trigger commands
+  version: 1.0.0
+servers:
+  - url: https://memory-orchestration-platform.onrender.com
+
+paths:
+  /gpt/trigger-memory:
+    post:
+      operationId: triggerMemoryAction
+      summary: Process memory trigger commands from regular ChatGPT
+      description: |
+        Process natural language memory commands like:
+        - "/remember I prefer dark mode"
+        - "/recall my preferences" 
+        - "/save this as important: user loves Python"
+        - "/search for project notes"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  description: The trigger command (remember, recall, save, search)
+                  enum: ["remember", "recall", "save", "search"]
+                content:
+                  type: string
+                  description: The content to remember or search query
+                user_context:
+                  type: string
+                  description: Additional context from the conversation
+                metadata:
+                  type: object
+                  description: Optional metadata
+              required:
+                - command
+                - content
+      responses:
+        "200":
+          description: Memory action completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  action:
+                    type: string
+                  result:
+                    type: string
+                  memories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                        score:
+                          type: number
+                required:
+                  - success
+                  - action
+                  - result
+
+  /gpt/smart-detect:
+    post:
+      operationId: smartDetectMemory
+      summary: Automatically detect memory-worthy content
+      description: |
+        Analyze conversation text and automatically detect when something should be remembered.
+        Looks for patterns like "I prefer", "Remember that", "My goal is", etc.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_text:
+                  type: string
+                  description: Recent conversation text to analyze
+                user_id:
+                  type: string
+                  description: User identifier (optional)
+              required:
+                - conversation_text
+      responses:
+        "200":
+          description: Analysis complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  should_remember:
+                    type: boolean
+                  suggested_memories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                        type:
+                          type: string
+                        confidence:
+                          type: number
+                  auto_saved:
+                    type: boolean
+                required:
+                  - should_remember
+                  - suggested_memories 

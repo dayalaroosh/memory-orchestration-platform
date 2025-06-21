@@ -9,9 +9,10 @@ import json
 import uuid
 import hashlib
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 from enum import Enum
 import logging
+import re
 
 # FastAPI imports
 from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, Header
@@ -688,6 +689,227 @@ async def search_memories_for_gpt(
     except Exception as e:
         logger.error(f"Error searching memories: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to search memories: {str(e)}")
+
+def parse_memory_command(text: str) -> Tuple[str, str, Dict]:
+    """Parse natural language memory commands"""
+    text = text.strip().lower()
+    
+    # Command patterns
+    patterns = {
+        'remember': [
+            r'^/?remember\s+(.+)',
+            r'^/?save\s+(.+)',
+            r'remember that (.+)',
+            r'save this:?\s*(.+)'
+        ],
+        'recall': [
+            r'^/?recall\s+(.+)',
+            r'^/?search\s+(.+)', 
+            r'what did i say about (.+)',
+            r'find (.+)',
+            r'search for (.+)'
+        ]
+    }
+    
+    for command, pattern_list in patterns.items():
+        for pattern in pattern_list:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                content = match.group(1).strip()
+                return command, content, {}
+    
+    return None, text, {}
+
+def detect_memory_worthy_content(text: str) -> List[Dict]:
+    """Detect content that should be automatically remembered"""
+    memory_patterns = [
+        (r'i prefer (.+)', 'preference'),
+        (r'my goal is (.+)', 'goal'),
+        (r'i work at (.+)', 'personal_info'),
+        (r'i\'m working on (.+)', 'project'),
+        (r'i decided to (.+)', 'decision'),
+        (r'i learned (.+)', 'insight'),
+        (r'important:?\s*(.+)', 'important'),
+        (r'note:?\s*(.+)', 'note')
+    ]
+    
+    suggestions = []
+    for pattern, memory_type in memory_patterns:
+        matches = re.finditer(pattern, text, re.IGNORECASE)
+        for match in matches:
+            content = match.group(1).strip()
+            suggestions.append({
+                'content': content,
+                'type': memory_type,
+                'confidence': 0.8,
+                'full_match': match.group(0)
+            })
+    
+    return suggestions
+
+# New endpoints for ChatGPT Actions
+@app.post("/gpt/trigger-memory")
+async def trigger_memory_action(
+    data: dict,
+    user_id: str = Depends(verify_simple_auth)
+):
+    """Process memory trigger commands from regular ChatGPT"""
+    try:
+        command = data.get("command", "").lower()
+        content = data.get("content", "")
+        user_context = data.get("user_context", "")
+        metadata = data.get("metadata", {})
+        
+        if not content:
+            # Try to parse command from content
+            parsed_command, parsed_content, parsed_metadata = parse_memory_command(content or user_context)
+            if parsed_command:
+                command = parsed_command
+                content = parsed_content
+                metadata.update(parsed_metadata)
+        
+        if command == "remember" or command == "save":
+            # Add memory
+            memory_id = str(uuid.uuid4())
+            memory_entry = {
+                "id": memory_id,
+                "content": content,
+                "user_id": user_id,
+                "created_at": datetime.now(timezone.utc),
+                "metadata": {
+                    **metadata,
+                    "source": "chatgpt_trigger",
+                    "command": command
+                }
+            }
+            
+            # Store locally
+            if not hasattr(app.state, "memories"):
+                app.state.memories = {}
+            if user_id not in app.state.memories:
+                app.state.memories[user_id] = []
+            app.state.memories[user_id].append(memory_entry)
+            
+            # Try Mem0 if available
+            if mem0_client:
+                try:
+                    messages = [{"role": "user", "content": content}]
+                    await mem0_client.add_memory(messages, user_id, metadata)
+                except Exception as e:
+                    logger.warning(f"Mem0 storage failed: {e}")
+            
+            return {
+                "success": True,
+                "action": "remembered",
+                "result": f"✅ Saved: {content[:50]}{'...' if len(content) > 50 else ''}",
+                "memory_id": memory_id
+            }
+            
+        elif command == "recall" or command == "search":
+            # Search memories
+            results = []
+            
+            # Search local storage
+            if hasattr(app.state, "memories") and user_id in app.state.memories:
+                for memory in app.state.memories[user_id]:
+                    if content.lower() in memory["content"].lower():
+                        results.append({
+                            "content": memory["content"],
+                            "score": 0.8,
+                            "created_at": memory["created_at"].isoformat()
+                        })
+            
+            # Search Mem0 if available
+            if mem0_client:
+                try:
+                    mem0_results = await mem0_client.search_memories(content, user_id, limit=5)
+                    if mem0_results and "memories" in mem0_results:
+                        for mem in mem0_results["memories"]:
+                            results.append({
+                                "content": mem.get("memory", mem.get("content", "")),
+                                "score": mem.get("score", 0.5),
+                                "source": "mem0"
+                            })
+                except Exception as e:
+                    logger.warning(f"Mem0 search failed: {e}")
+            
+            return {
+                "success": True,
+                "action": "recalled",
+                "result": f"🔍 Found {len(results)} memories about '{content}'",
+                "memories": results[:5]  # Limit to 5 results
+            }
+        
+        else:
+            return {
+                "success": False,
+                "action": "unknown",
+                "result": f"❌ Unknown command: {command}. Use 'remember' or 'recall'."
+            }
+            
+    except Exception as e:
+        logger.error(f"Error in trigger_memory_action: {e}")
+        return {
+            "success": False,
+            "action": "error",
+            "result": f"❌ Error: {str(e)}"
+        }
+
+@app.post("/gpt/smart-detect")
+async def smart_detect_memory(
+    data: dict,
+    user_id: str = Depends(verify_simple_auth)
+):
+    """Automatically detect memory-worthy content"""
+    try:
+        conversation_text = data.get("conversation_text", "")
+        
+        suggestions = detect_memory_worthy_content(conversation_text)
+        should_remember = len(suggestions) > 0
+        
+        # Auto-save high-confidence suggestions
+        auto_saved = False
+        if should_remember:
+            for suggestion in suggestions:
+                if suggestion["confidence"] > 0.7:
+                    # Auto-save this memory
+                    memory_id = str(uuid.uuid4())
+                    memory_entry = {
+                        "id": memory_id,
+                        "content": suggestion["content"],
+                        "user_id": user_id,
+                        "created_at": datetime.now(timezone.utc),
+                        "metadata": {
+                            "type": suggestion["type"],
+                            "auto_detected": True,
+                            "confidence": suggestion["confidence"],
+                            "source": "smart_detection"
+                        }
+                    }
+                    
+                    # Store locally
+                    if not hasattr(app.state, "memories"):
+                        app.state.memories = {}
+                    if user_id not in app.state.memories:
+                        app.state.memories[user_id] = []
+                    app.state.memories[user_id].append(memory_entry)
+                    auto_saved = True
+        
+        return {
+            "should_remember": should_remember,
+            "suggested_memories": suggestions,
+            "auto_saved": auto_saved,
+            "message": f"🤖 Detected {len(suggestions)} memory-worthy items" if should_remember else "No memories detected"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in smart_detect_memory: {e}")
+        return {
+            "should_remember": False,
+            "suggested_memories": [],
+            "auto_saved": False,
+            "error": str(e)
+        }
 
 if __name__ == "__main__":
     # Railway sets PORT automatically, fallback to 8090 for local development
