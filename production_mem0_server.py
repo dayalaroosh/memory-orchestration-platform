@@ -31,7 +31,7 @@ import requests
 
 # Load environment
 from dotenv import load_dotenv
-load_dotenv("mem0.env")
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -294,24 +294,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Application startup event"""
+    logger.info("🚀 Memory Orchestration Platform starting up...")
+    logger.info(f"📊 Mem0 API integration: {'✅ enabled' if mem0_client else '⚠️ disabled (no API key)'}")
+    logger.info(f"🔐 Secret key: {'✅ configured' if config.SECRET_KEY != 'your-secret-key-change-in-production' else '⚠️ using default'}")
+    logger.info("✅ Application startup complete")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Application shutdown event"""
+    logger.info("🛑 Memory Orchestration Platform shutting down...")
+    logger.info("✅ Application shutdown complete")
+
 @app.get("/")
 async def root():
+    """Root endpoint with service information"""
     return {
         "message": "Memory Orchestration Platform API",
         "version": "1.0.0",
         "status": "operational",
         "mem0_integration": "enabled" if mem0_client else "disabled",
         "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+        "endpoints": {
+            "health": "/health",
+            "auth": "/auth/login",
+            "memories": "/memories",
+            "search": "/memories/search"
+        }
     }
 
 @app.get("/health")
 async def health_check():
+    """Simple health check that always returns healthy for Railway"""
     return {
         "status": "healthy",
         "mem0_status": "connected" if mem0_client else "not_configured",
         "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+        "service": "Memory Orchestration Platform",
+        "version": "1.0.0"
     }
 
+# Authentication endpoints
 @app.post("/auth/register")
 async def register_user(user_data: UserCreate):
     # Check if user exists
@@ -352,6 +377,7 @@ async def login_user(user_data: UserLogin):
         "user_id": user["id"]
     }
 
+# Memory endpoints
 @app.post("/memories", response_model=MemoryResponse)
 async def create_memory(
     memory_data: MemoryCreate,
@@ -396,7 +422,7 @@ async def create_memory(
         ]
         background_tasks.add_task(
             store_in_mem0_platform, 
-            user_id, 
+            user_id,
             messages, 
             enhanced_metadata, 
             memory_id
@@ -508,10 +534,16 @@ async def add_memory_legacy(request: dict, user_id: str = Depends(verify_token))
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8090))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    logger.info(f"Starting Memory Orchestration Platform on {host}:{port}")
+    logger.info(f"Mem0 API integration: {'enabled' if mem0_client else 'disabled'}")
+    
     uvicorn.run(
-        "production_mem0_server:app",
-        host="0.0.0.0",
+        app,
+        host=host,
         port=port,
         reload=False,
-        log_level="info"
+        log_level="info",
+        access_log=True
     ) 
