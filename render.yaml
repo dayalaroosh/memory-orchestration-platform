@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: memory-orchestration-platform
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn production_mem0_server:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: MEM0_API_KEY
+        sync: false  # You'll set this in Render dashboard
+      - key: SECRET_KEY
+        generateValue: true  # Render will auto-generate
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    autoDeploy: true
+    branch: main 
