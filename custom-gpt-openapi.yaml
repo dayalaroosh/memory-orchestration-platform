@@ -9,6 +9,7 @@ servers:
 paths:
   /health:
     get:
+      operationId: checkHealth
       summary: Health check
       description: Check if the service is running
       responses:
@@ -29,6 +30,7 @@ paths:
 
   /gpt/memories:
     post:
+      operationId: addMemory
       summary: Add a memory
       description: Store a new memory in the system
       requestBody:
@@ -67,6 +69,7 @@ paths:
 
   /gpt/search:
     post:
+      operationId: searchMemories
       summary: Search memories
       description: Search for memories using a query
       requestBody:
