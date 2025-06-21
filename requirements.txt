@@ -1,23 +1,23 @@
 # Memory Orchestration Platform - Production Dependencies
 
 # Core Framework
-fastapi==0.104.1
+fastapi==0.115.0
 uvicorn[standard]==0.29.0
-python-multipart==0.0.6
+python-multipart==0.0.12
 
 # Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
-# Data Processing
-pydantic==2.4.2
+# Data Processing - Updated to newer version with pre-compiled wheels
+pydantic==2.10.2
 
 # Utilities
-python-dotenv==1.0.0
+python-dotenv==1.0.1
 
 # HTTP Client for Mem0 Platform API
-httpx==0.25.2
-requests==2.31.0
+httpx==0.28.1
+requests==2.32.3
 
 # Database (for local user management)
-sqlalchemy==2.0.23 
+sqlalchemy==2.0.36 
