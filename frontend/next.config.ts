@@ -1,24 +1,29 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Turbopack configuration (stable in 15.3, moved to top-level)
-  turbopack: {
-    rules: {
-      // Custom rules can be added here if needed
-    },
-  },
-  // Enable React 19 features
+  // Enable React strict mode for better development experience
   reactStrictMode: true,
-  // Optimize for modern browsers
+  
+  // Use SWC minifier for better performance
   swcMinify: true,
-  // Enable TypeScript strict mode
+  
+  // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Enable ESLint during builds
+  
+  // ESLint configuration  
   eslint: {
     ignoreDuringBuilds: false,
   },
+
+  // Image optimization
+  images: {
+    unoptimized: true, // For better compatibility with Vercel
+  },
+
+  // Output configuration for static export compatibility
+  output: 'standalone',
 };
 
 export default nextConfig; 

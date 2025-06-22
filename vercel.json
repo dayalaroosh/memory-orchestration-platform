@@ -1,7 +1,12 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm install",
-  "devCommand": "cd frontend && npm run dev",
-  "framework": "nextjs"
+  "version": 2,
+  "name": "memory-orchestration-platform",
+  "buildCommand": "cd memory-platform-clean/frontend && npm run build",
+  "outputDirectory": "memory-platform-clean/frontend/.next",
+  "installCommand": "cd memory-platform-clean/frontend && npm install",
+  "devCommand": "cd memory-platform-clean/frontend && npm run dev",
+  "framework": "nextjs",
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 
